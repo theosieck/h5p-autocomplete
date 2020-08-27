@@ -6,18 +6,15 @@
 			if(H5P) {
 				// every time something happens, log it to the console
 				H5P.externalDispatcher.on('xAPI', function (event) {
-					// console.log(event);
 					const result = event.data.statement.result;
 					const hasParent = event.data.statement.context.contextActivities.parent;
 					const category = event.data.statement.context.contextActivities.category;
 
-					console.log(event.data.statement);
-					if(result && result.score && result.completion) {
-						console.log(result);
-						// if score is defined and completion is true then they completed the question
-						if(result.score.raw === result.score.max || (category && category[0].id === 'http://h5p.org/libraries/H5P.Summary-1.10')) {
+					if(result && result.score && result.completion && !hasParent) {
+						// if score is defined and completion is true then they completed the question, if they have a parent ignore
+						if(result.score.scaled === 1 || (category && category[0].id === 'http://h5p.org/libraries/H5P.Summary-1.10')) {
 							// activity completed successfully
-							console.log(result.score.raw);
+
 							const dataObj = {
 								action: ajaxData.action,
 								_ajax_nonce: ajaxData.nonce,

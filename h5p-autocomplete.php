@@ -1,10 +1,10 @@
 <?php
 /*
  * Plugin Name: H5P Autocomplete
- * Version: 0.1
+ * Version: 0.2
  * Author: Jorie Sieck
  * Author URI: https://www.joriesieck.com
- * Description: Autocomplete LearnDash topic on H5P completion
+ * Description: Adds setting to LearnDash topics to toggle autocompletion on H5P completion
  * Text Domain: ta-h5p-autocomplete
  * License: GPLv3
 */
@@ -63,13 +63,16 @@ function ta_save_autocomplete_setting($settings) {
 }
 
 /**
- * remove mark complete button, if set in topic settings
+ * if autocomplete turned on, remove mark complete button & call scripts function
 */
 add_filter('learndash_mark_complete','ta_remove_mark_complete',99,2);
 function ta_remove_mark_complete($return,$post) {
 	// check topic settings
 	$h5p_autocomplete = learndash_get_setting($post,'ta_h5p_auto_complete');
 	if(isset($h5p_autocomplete) && $h5p_autocomplete==='enabled') {
+		// enqueue scripts
+		ta_h5p_completion();
+
 		// remove html markup for mark complete button
 		return '';
 	}
@@ -77,8 +80,9 @@ function ta_remove_mark_complete($return,$post) {
 	return $return;
 }
 
-// enqueue scripts
-add_action('wp_enqueue_scripts','ta_h5p_completion');
+/**
+ * enqueue scripts
+*/
 function ta_h5p_completion() {
 	wp_enqueue_script(
 			'tahc-main-js',
@@ -96,7 +100,9 @@ function ta_h5p_completion() {
 	));
 }
 
-// handle ajax request
+/**
+ * handle ajax request
+*/
 add_action('wp_ajax_ta_mark_complete','ta_mark_complete');
 function ta_mark_complete() {
 	check_ajax_referer('ta_autocomplete_nonce');
@@ -114,7 +120,7 @@ function ta_mark_complete() {
 	// mark the corresponding topic completed
 	$result = learndash_process_mark_complete($current_user->ID,$topic_id,false,$course_id);
 
-	// make sure it got marked complete
+	// make sure it got marked complete - possible future edit save to local storage if completion fails?
 	$is_complete = learndash_is_topic_complete($current_user->ID,$topic_id,$course_id);
 
 	// send response back to js
